@@ -33,6 +33,7 @@ public class PostDtos {
         @NotBlank
         private String content;
 
+        @NotBlank
         @Size(max=50)
         private String writer;
 
@@ -84,6 +85,7 @@ public class PostDtos {
                     .id(post.getId())
                     .title(post.getTitle())
                     .content(post.getContent())
+                    .writer(post.getWriter())
                     .createdAt(post.getCreatedAt())
                     .updatedAt(post.getUpdatedAt())
                     .build();

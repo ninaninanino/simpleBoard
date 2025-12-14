@@ -19,28 +19,28 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public PostDtos.Response getById(@PathVariable Long id) {
+    public PostDtos.Response getById(@PathVariable("id") Long id) {
         return postService.getById(id);
     }
 
     @GetMapping
     public PostDtos.ListResponse getList(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(value="page", defaultValue = "0") int page,
+            @RequestParam(value="size", defaultValue = "10") int size
     ) {
         return postService.getList(page, size);
     }
 
     @PutMapping("/{id}")
     public PostDtos.Response update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody @Valid PostDtos.UpdateRequest request
     ) {
         return postService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable("id") Long id) {
         postService.delete(id);
     }
 }

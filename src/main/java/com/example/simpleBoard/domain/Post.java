@@ -37,7 +37,7 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
-    @Column(length = 50)
+    @Column(nullable = false, length = 50)
     private String writer;
 
     @CreationTimestamp

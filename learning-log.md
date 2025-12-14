@@ -106,3 +106,101 @@ Repository는 Entity가 없으면 오류가 난다.
 - DTO와 Service에서 계속 막히는 이유는 실력이 부족해서가 아니라
 - 기존에 익숙했던 자바 스타일과 다른 패턴을 처음 접했기 때문이라는 걸 알게 됐다.
 - “왜 이렇게 쓰는지”를 이해하려고 질문하는 과정 자체가 학습이라는 걸 체감했다.
+
+
+***************************************************
+# Learning Log
+
+## 2025-12-13
+
+### 오늘 한 것
+- Spring Boot 게시판 API 실행 및 전체 흐름 점검
+- Gradle / JDK / IntelliJ 실행 환경 충돌 원인 파악 및 우회
+- H2 Console 설정 및 접속 확인
+- curl, Postman을 이용한 REST API 직접 호출
+- POST → DB 저장 → GET 조회까지 데이터 흐름 검증
+- DTO 검증 + Entity 제약 조건 적용 및 에러 흐름 확인
+
+---
+
+### 실행 환경 관련 정리
+
+- Gradle JVM, Java toolchain, 실행 JDK는 서로 다른 역할임을 확인
+  - Gradle JVM: 빌드 시 사용
+  - toolchain: 컴파일 타겟 버전
+  - 실행 JDK: 실제 서버 기동 시 사용
+- IntelliJ에서 Build Tool을 Gradle이 아닌 IntelliJ로 변경
+  - Gradle init script / daemon 문제 우회
+  - 서버 정상 기동 확인
+- “환경 문제와 끝까지 싸우는 것”보다  
+  “동작 가능한 경로를 선택하는 것도 실력”이라는 판단 기준 정립
+
+---
+
+### H2 및 DB 흐름 관련 정리
+
+- H2 Database는 서버 기동 시 정상 연결 상태였음
+- H2 Console은 별도 설정 없이는 접근 불가함
+- JDBC URL을 고정(`jdbc:h2:mem:testdb`)하여 디버깅 편의성 확보
+- insert / select 로그를 통해 DB 접근 및 데이터 반영 여부 직접 확인
+- 코드 단위가 아닌 **데이터 흐름 단위**로 동작을 인식하게 됨
+
+---
+
+### Spring Boot 4 / Spring 7 관련 핵심 이슈
+
+#### @PathVariable / @RequestParam 이름 명시 필요
+
+- 파라미터 이름을 리플렉션으로 읽을 수 없는 경우 예외 발생
+- IntelliJ 빌드 환경에서는 `-parameters` 옵션 미적용 상태가 기본
+- 다음과 같은 패턴이 안전함을 확인
+  @PathVariable("id")
+  @RequestParam(value = "page", defaultValue = "0")
+
+- 환경 차이에 영향을 받지 않는 방식으로 컨트롤러 작성 필요성 인식
+
+---
+
+### REST API 호출 및 테스트 흐름 정리
+
+- REST API는 서버 측 “규칙/약속”
+- curl, Postman은 해당 API를 호출하기 위한 클라이언트 도구
+- Windows PowerShell의 `curl`은 실제 curl이 아님
+- IntelliJ Terminal을 Git Bash(MINGW64)로 변경
+  - 리눅스 환경과 동일한 curl 사용 가능
+- curl을 이용해 다음 흐름 검증
+  - POST /api/posts
+  - GET /api/posts
+  - GET /api/posts/{id}
+
+---
+
+### 데이터 누락 이슈 및 원인 분석
+
+- POST 요청 시 writer 값은 전달되었으나 응답에서 null로 확인됨
+- Service 계층에서 Entity 생성 시 writer 매핑 누락 확인
+- Service 매핑 수정 후 정상 반영 확인
+- “요청은 오는데 저장이 안 된다” 유형의 전형적인 실무 이슈 패턴 학습
+
+---
+
+### 검증 로직에 대한 이해
+
+- DTO(CreateRequest)에 @NotBlank 적용
+- Entity(writer 컬럼)에 nullable = false 적용
+- writer 누락 시 400 Bad Request 발생 확인
+- 요청 단계 + DB 단계 이중 검증 구조 확립
+- 검증 실패 시 빠르게 원인을 드러내는 구조의 중요성 인식
+
+---
+
+### 느낀 점
+
+- 오늘 막힌 대부분의 문제는 코드 문법 문제가 아니라
+  실행 환경, 빌드 방식, 프레임워크 버전 차이에서 발생함
+- 에러 메시지를 회피하지 않고 끝까지 추적하는 경험이 큰 학습이 됨
+- REST API를 “개념”이 아니라
+  **터미널에서 직접 호출하고, 데이터로 확인**하면서 이해하게 됨
+- 단순 게시판이지만
+  실무에서 반복되는 문제 패턴을 압축적으로 경험한 하루였음
+
