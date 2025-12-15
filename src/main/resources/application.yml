@@ -1,13 +1,17 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/simpleboard?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: app
-    password: apppass
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/app?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:pass}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update #운영에서는 끔. 개발용 테이블자동생성.
+    properties:
+      hibernate:
+        format_sql: true
+      open-in-view: false
 
 logging:
   level:

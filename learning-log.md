@@ -204,3 +204,200 @@ Repository는 Entity가 없으면 오류가 난다.
 - 단순 게시판이지만
   실무에서 반복되는 문제 패턴을 압축적으로 경험한 하루였음
 
+***************************************************
+# Learning Log
+
+## 2025-12-15
+
+### 오늘 한 것
+- WSL 설치 및 재부팅 후 Docker Desktop 연동 확인
+- Docker 동작 확인
+  - docker --version
+  - docker run --rm hello-world
+- MySQL 컨테이너 기동 및 접속 확인
+  - docker run mysql:8
+  - docker exec -it mysql8 mysql -u root -p
+  - app 스키마, posts 테이블 생성 및 데이터 INSERT 확인
+- Spring Boot 애플리케이션을 Docker 이미지로 빌드
+  - Dockerfile 작성(멀티 스테이지 빌드)
+  - .dockerignore 작성
+- docker-compose로 Spring Boot + MySQL을 함께 기동
+  - docker-compose.yml 작성
+  - docker compose build / up 실행
+  - springapp / mysql8 컨테이너 상태 확인
+- 트러블슈팅(로그 기반 원인 파악 및 해결)
+  - Gradle 빌드 실패(의존성 좌표 문제) 해결
+  - MySQL 기동 실패(command 옵션 호환성 문제) 해결
+  - JDBC 연결 실패(Public Key Retrieval) 해결
+  - 없는 리소스 조회 시 500 -> 404로 개선(컨트롤러 레벨 처리)
+
+---
+
+## 오늘 쓴 주요 명령어 정리
+
+### Docker 기본
+- docker --version
+  - Docker CLI 버전 확인
+
+- docker info
+  - Docker daemon(엔진) 상태/환경 확인
+
+- docker ps
+  - 실행 중 컨테이너 목록 확인
+
+- docker ps -a
+  - 종료된 컨테이너 포함 전체 목록 확인
+
+- docker run --rm hello-world
+  - hello-world 컨테이너를 실행해서 Docker 설치/엔진/네트워크 정상 여부 확인
+  - --rm 은 실행 종료 후 컨테이너를 자동 삭제
+
+- docker logs <컨테이너명>
+  - 컨테이너 로그 확인
+  - 예: docker logs springapp --tail 200
+
+- docker exec -it <컨테이너명> <명령>
+  - 실행 중 컨테이너 내부로 들어가 명령 실행
+  - 예: docker exec -it mysql8 mysql -u root -p
+
+---
+
+## docker compose 개념 정리
+
+### docker compose란?
+- 여러 컨테이너(예: Spring, MySQL)를 "한 묶음"으로 관리하기 위한 도구
+- docker-compose.yml 파일에 서비스(컨테이너), 네트워크, 볼륨, 환경변수 등을 선언해두고
+  한 번의 명령으로 동시에 실행/중지/재기동/삭제를 할 수 있음
+- 단일 docker run 명령을 여러 개 치는 방식보다
+  환경 재현성과 협업, 실행 편의성이 크게 좋아짐
+
+### docker-compose.yml에서 자주 보는 항목 의미
+- services:
+  - 실행할 컨테이너들을 나열
+  - 예: app(spring), db(mysql)
+
+- build:
+  - 해당 서비스 이미지를 Dockerfile로 빌드해서 사용
+  - 예: app은 build: . 로 현재 폴더의 Dockerfile을 빌드
+
+- image:
+  - Docker Hub 같은 레지스트리에서 받을 이미지 지정
+  - 예: db는 image: mysql:8
+
+- ports:
+  - "호스트포트:컨테이너포트" 형태로 외부 접근 포트 매핑
+  - 예: "8080:8080" 은 내 PC의 8080으로 접근하면 컨테이너 8080으로 전달
+
+- environment:
+  - 컨테이너 내부 환경 변수 설정
+  - 예: SPRING_DATASOURCE_URL 같은 설정을 코드/파일 수정 없이 주입 가능
+
+- depends_on:
+  - 서비스 기동 순서/의존성 설정
+  - healthcheck 조건과 같이 쓰면 db가 healthy 된 뒤 app을 띄우게 할 수 있음
+
+- healthcheck:
+  - 컨테이너가 "정상 상태"인지 판단하는 체크 로직
+  - db가 healthy로 뜬 뒤 app을 띄우는 데 사용
+
+---
+
+## docker compose 명령어 설명
+
+### docker compose config
+- docker-compose.yml이 문법적으로 정상인지, 최종 설정이 어떻게 해석되는지 확인
+- 실제 실행 전에 오류를 잡는 용도
+
+### docker compose build
+- docker-compose.yml의 build 대상 서비스 이미지를 빌드
+- 예: app 서비스는 Dockerfile로 이미지가 만들어짐
+
+### docker compose build --no-cache
+- 빌드 캐시를 무시하고 완전히 새로 빌드
+- 의존성/코드 변경이 캐시에 묻히거나, 이전 상태가 남았을 때 강제로 새로 만들 때 사용
+
+### docker compose up
+- compose에 정의된 서비스들을 생성하고 실행
+- 기본적으로:
+  - 필요한 이미지가 없으면 pull
+  - 필요한 경우 build
+  - 네트워크 생성
+  - 컨테이너 생성 및 실행
+
+### docker compose up -d
+- -d (detached): 백그라운드로 실행하고 터미널을 반환
+- 서버처럼 계속 떠 있어야 하는 경우 보통 -d를 사용
+
+### docker compose up -d --build
+- up 하기 전에 build까지 수행
+- 코드 수정 후 컨테이너에 반영하려면 보통 이 옵션을 함께 사용
+
+### docker compose up -d --build --force-recreate
+- 컨테이너를 강제로 새로 생성
+- "이미 실행 중인 컨테이너"가 있어도 재생성해서 변경사항이 확실히 반영되도록 함
+
+### docker compose ps
+- compose 프로젝트로 떠 있는 컨테이너 상태 확인
+- 예: mysql8 healthy 여부, springapp up 여부 확인
+
+### docker compose down
+- compose로 띄운 컨테이너/네트워크 정리(중지 및 삭제)
+- 이미지 자체는 기본적으로 남음
+
+### docker compose down -v
+- down + 볼륨까지 삭제
+- DB 같은 서비스는 볼륨에 데이터가 남기 때문에
+  완전 초기화가 필요할 때 사용
+- 주의: -v 하면 데이터도 같이 삭제됨
+
+---
+
+## 오늘 발생한 문제와 해결 요약
+
+### 1) Gradle 빌드 실패: MySQL 커넥터 의존성 좌표 오류
+- 증상
+  - Could not find mysql:mysql-connector-j:8.4.0
+- 원인
+  - groupId가 잘못된 의존성 좌표 사용
+- 해결
+  - runtimeOnly 'com.mysql:mysql-connector-j:8.4.0' 로 수정
+  - docker compose build --no-cache 로 재빌드
+
+### 2) MySQL 컨테이너 기동 실패: 잘못된 mysqld 옵션
+- 증상
+  - unknown variable 'default-authentication-plugin=mysql_native_password'
+  - data directory unusable
+- 원인
+  - MySQL 8.4에서 해당 옵션이 더 이상 유효하지 않아 초기화 실패
+- 해결
+  - docker-compose.yml에서 해당 command 옵션 제거
+  - docker compose down -v 로 볼륨까지 초기화 후 재기동
+
+### 3) Spring -> MySQL 연결 실패: Public Key Retrieval is not allowed
+- 증상
+  - JDBCConnectionException / Public Key Retrieval is not allowed
+- 원인
+  - MySQL 기본 인증 방식(caching_sha2_password)에서 공개키 조회가 차단되어 접속 실패
+- 해결
+  - JDBC URL에 allowPublicKeyRetrieval=true 추가
+  - docker compose up -d --force-recreate 로 재기동
+
+### 4) 없는 ID 조회 시 500 발생
+- 증상
+  - GET /api/posts/{id} 에서 존재하지 않는 id 요청 시 500
+- 원인
+  - 서비스에서 예외를 던졌지만 HTTP 404로 변환하는 처리가 없어서 500으로 응답
+- 해결
+  - Global handler 없이, 컨트롤러 메서드에서 try/catch로 404 응답 처리
+  - 재빌드 및 재기동 후 404 응답 확인
+
+---
+
+## 결과(오늘 완료 기준)
+- Docker Desktop + WSL 기반 개발 환경 구축 완료
+- Spring Boot + MySQL을 docker-compose로 함께 구동 완료
+- DB 연결 및 테이블 생성, 데이터 입력 확인 완료
+- API 엔드포인트 확인
+  - /api/posts 정상 응답 확인
+  - 없는 리소스 요청 시 404 응답 확인
+- Week 1 목표 달성

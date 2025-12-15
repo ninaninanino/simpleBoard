@@ -1,0 +1,33 @@
+services:
+  db:
+    image: mysql:8
+    container_name: mysql8
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: app
+    ports:
+      - "3306:3306"
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -ppass --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    container_name: springapp
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: pass
+      # 필요하면 profile도 여기서 켜기
+      # SPRING_PROFILES_ACTIVE: local
+    ports:
+      - "8080:8080"

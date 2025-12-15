@@ -7,7 +7,6 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,14 +26,14 @@ public class Post {
      * UPDATED_AT
      */
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = 4000)
     private String content;
 
     @Column(nullable = false, length = 50)
@@ -46,6 +45,7 @@ public class Post {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
 
     /**
      * 생성용 팩토리 메서드 (new Post() 대신 깔끔하게)
