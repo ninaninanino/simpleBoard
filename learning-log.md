@@ -401,3 +401,45 @@ Repository는 Entity가 없으면 오류가 난다.
   - /api/posts 정상 응답 확인
   - 없는 리소스 요청 시 404 응답 확인
 - Week 1 목표 달성
+
+****************************************
+
+## 2025-12-17
+
+### 오늘 학습한 내용
+
+- EXPLAIN QUERY PLAN의 개념 이해
+  - SQL 실행 결과가 아닌, DB가 SQL을 어떻게 실행할지에 대한 실행 계획임을 학습
+  - 인덱스 튜닝은 EXPLAIN PLAN과 반드시 함께 봐야 함을 인지
+
+- Access Path(접근 경로) 개념 학습
+  - SCAN, SEARCH는 지표가 아니라 DB의 데이터 접근 방식임
+  - SCAN: 범위를 좁히지 못해 순차적으로 훑는 방식
+  - SEARCH: 인덱스를 통해 시작 지점을 바로 찾아 접근하는 방식
+
+- SCAN과 SEARCH의 차이 이해
+  - SCAN은 Full Table Scan뿐 아니라 Index Full Scan 등 “훑는 접근”을 포괄
+  - SEARCH는 조건을 이용해 필요한 row만 바로 접근하는 방식
+  - SCAN이 항상 나쁜 것은 아니나, 대용량 테이블에서는 성능 이슈 가능성 큼
+
+- WHERE 절 작성 방식이 인덱스 사용에 미치는 영향 학습
+  - 컬럼에 함수가 적용되면 일반 인덱스를 사용할 수 없음
+  - 예: TO_CHAR(CREATED_AT, 'YYYYMMDD') 사용 시 SCAN 발생 가능
+  - 날짜 조건은 범위 비교 방식으로 작성해야 인덱스 사용 가능
+
+- 함수 기반 인덱스(Function-Based Index) 개념 학습
+  - 컬럼이 아닌 함수 결과값을 기준으로 인덱스를 생성하는 방식
+  - 기존 SQL을 변경할 수 없는 레거시 환경에서 사용 가능
+  - 실무에서는 가급적 함수 없는 WHERE 절이 우선
+
+- EXPLAIN PLAN에서 추가로 확인해야 할 요소 정리
+  - 접근 방식(Access Path): SCAN / SEARCH 여부
+  - 사용 인덱스 확인: USING INDEX 및 인덱스 이름
+  - 조인 순서: 어떤 테이블이 먼저 읽히는지
+  - 예상 row 수 / 비용 정보 확인
+  - FILTER, BLOOM FILTER 등 추가 최적화 요소 존재 여부
+
+- EXPLAIN PLAN 사전 예측 기준 정리
+  - 컬럼을 그대로 사용하면 SEARCH 가능성 증가
+  - 함수, 연산, LIKE '%값%' 사용 시 SCAN 가능성 증가
+  - 결과 row 수가 많을수록 SCAN 선택 가능성 증가
